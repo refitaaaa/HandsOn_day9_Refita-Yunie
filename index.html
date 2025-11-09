@@ -50,35 +50,50 @@
   <pre id="codeDisplay">Pilih file Dart untuk melihat isinya...</pre>
 
   <script>
-    const folder = "codes";
+    const repo = "refitaaaa/HandsOn_day9_Refita-Yunie"; // ganti sesuai repo
+    const rootFolder = "lib"; // folder utama yang berisi semua file dart
     const fileList = document.getElementById("fileList");
     const codeDisplay = document.getElementById("codeDisplay");
 
-    // Menampilkan semua file dart di folder 'codes/'
-    async function getAllDartFiles() {
+    // Fungsi rekursif untuk ambil semua file .dart dari folder dan subfolder
+    async function getDartFiles(folder) {
       try {
-        // Ambil daftar file dari repositori GitHub langsung (via API GitHub)
-        const repo = "refitaaaa/HandsOn_day9_Refita-Yunie";
         const response = await fetch(`https://api.github.com/repos/${repo}/contents/${folder}`);
         const data = await response.json();
-        const dartFiles = data.filter(item => item.name.endsWith(".dart"));
-        if (dartFiles.length === 0) {
-          fileList.textContent = "Tidak ada file .dart ditemukan.";
-          return;
+        if (!Array.isArray(data)) return [];
+
+        let dartFiles = [];
+        for (const item of data) {
+          if (item.type === "file" && item.name.endsWith(".dart")) {
+            dartFiles.push(item);
+          } else if (item.type === "dir") {
+            const subFiles = await getDartFiles(item.path); // rekursif
+            dartFiles = dartFiles.concat(subFiles);
+          }
         }
-        fileList.innerHTML = "";
-        dartFiles.forEach(file => {
-          const btn = document.createElement("button");
-          btn.textContent = file.name;
-          btn.onclick = () => loadCode(file.download_url);
-          fileList.appendChild(btn);
-        });
+        return dartFiles;
       } catch (error) {
-        fileList.textContent = "❌ Gagal memuat daftar file: " + error.message;
+        console.error("Error fetching files:", error);
+        return [];
       }
     }
 
-    // Fungsi untuk memuat isi file .dart
+    async function showFiles() {
+      fileList.textContent = "Memuat daftar file...";
+      const dartFiles = await getDartFiles(rootFolder);
+      if (dartFiles.length === 0) {
+        fileList.textContent = "Tidak ada file .dart ditemukan.";
+        return;
+      }
+      fileList.innerHTML = "";
+      dartFiles.forEach(file => {
+        const btn = document.createElement("button");
+        btn.textContent = file.path; // tampilkan path lengkap agar jelas foldernya
+        btn.onclick = () => loadCode(file.download_url);
+        fileList.appendChild(btn);
+      });
+    }
+
     async function loadCode(url) {
       codeDisplay.textContent = "Memuat isi file...";
       try {
@@ -90,7 +105,7 @@
       }
     }
 
-    getAllDartFiles();
+    showFiles();
   </script>
 </body>
 </html>
