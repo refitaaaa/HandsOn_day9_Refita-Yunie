@@ -51,14 +51,14 @@
 
   <script>
     const repo = "refitaaaa/HandsOn_day9_Refita-Yunie"; // ganti sesuai repo
-    const rootFolder = "lib"; // folder utama yang berisi semua file dart
     const fileList = document.getElementById("fileList");
     const codeDisplay = document.getElementById("codeDisplay");
 
     // Fungsi rekursif untuk ambil semua file .dart dari folder dan subfolder
-    async function getDartFiles(folder) {
+    async function getDartFiles(folder = "") {
       try {
-        const response = await fetch(`https://api.github.com/repos/${repo}/contents/${folder}`);
+        const url = folder ? `https://api.github.com/repos/${repo}/contents/${folder}` : `https://api.github.com/repos/${repo}/contents`;
+        const response = await fetch(url);
         const data = await response.json();
         if (!Array.isArray(data)) return [];
 
@@ -78,9 +78,10 @@
       }
     }
 
+    // Menampilkan semua tombol file .dart
     async function showFiles() {
       fileList.textContent = "Memuat daftar file...";
-      const dartFiles = await getDartFiles(rootFolder);
+      const dartFiles = await getDartFiles();
       if (dartFiles.length === 0) {
         fileList.textContent = "Tidak ada file .dart ditemukan.";
         return;
@@ -88,12 +89,13 @@
       fileList.innerHTML = "";
       dartFiles.forEach(file => {
         const btn = document.createElement("button");
-        btn.textContent = file.path; // tampilkan path lengkap agar jelas foldernya
+        btn.textContent = file.path; // tampilkan path lengkap agar jelas
         btn.onclick = () => loadCode(file.download_url);
         fileList.appendChild(btn);
       });
     }
 
+    // Menampilkan isi file
     async function loadCode(url) {
       codeDisplay.textContent = "Memuat isi file...";
       try {
